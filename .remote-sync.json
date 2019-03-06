@@ -1,0 +1,20 @@
+{
+  "logger": {
+    "title": "Remote Sync"
+  },
+  "uploadOnSave": true,
+  "useAtomicWrites": true,
+  "deleteLocal": true,
+  "hostname": "172.18.36.82",
+  "port": "22",
+  "target": "/mnt/lustre/xushuang/easton/projects/espnet",
+  "ignore": [
+    ".remote-sync.json",
+    "*.md",
+    ".git/**"
+  ],
+  "username": "xushuang",
+  "watch": [],
+  "transport": "scp",
+  "keyfile": "/Users/easton/.ssh/id_rsa"
+}

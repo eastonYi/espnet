@@ -38,7 +38,7 @@ and also follows [Kaldi](http://kaldi-asr.org/) style data processing, feature e
 - NCCL 2.0+ (for the use of multi-GPUs)
 - protocol buffer (for the sentencepiece, you need to install via package manager e.g. `sudo apt-get install libprotobuf9v5 protobuf-compiler libprotobuf-dev`. See details `Installation` of https://github.com/google/sentencepiece/blob/master/README.md)
 
-- PyTorch 0.4.1, 1.0.0 
+- PyTorch 0.4.1, 1.0.0
 - gcc>=4.9 for PyTorch1.0.0
 - Chainer 5.0.0
 
@@ -69,8 +69,12 @@ export CUDA_HOME=$CUDAROOT
 export CUDA_PATH=$CUDAROOT
 ```
 
+### Step 2
+Notation
+I recommend installing the KALDI first, since the make step here is to install the KALDI in a standard way
+since it needs to create an env with miniconda, which is complex, one can skip this and install each package step by step in current env (check the MAKEFILE to see what are needed)
+the kaldi need to compile before use because some executable programs are needed by espnet. However, not the whole kaldi is required, so one can only conpile parts of the directories that is used in espnet, such the src/featbin/. Change the MAKEFILE in the directory.
 ### Step 2-A) installation with compiled Kaldi
-
 Install Python libraries and other required tools with [miniconda](https://conda.io/docs/glossary.html#miniconda-glossary)
 ```sh
 $ cd tools
@@ -174,7 +178,7 @@ this epoch [#####.............................................] 10.84%
 ```
 
 In addition [Tensorboard](https://www.tensorflow.org/guide/summaries_and_tensorboard) events are automatically logged in the `tensorboard/${expname}` folder. Therefore, when you install Tensorboard, you can easily compare several experiments by using
-```sh 
+```sh
 $ tensorboard --logdir tensorboard
 ```
 and connecting to the given address (default : localhost:6006). This will provide the following information:
@@ -298,3 +302,12 @@ Note that the performance of the CSJ, HKUST, and Librispeech tasks was significa
 
 [3] Shinji Watanabe, Takaaki Hori, Suyoun Kim, John R. Hershey and Tomoki Hayashi, "Hybrid CTC/Attention Architecture for End-to-End Speech Recognition," *IEEE Journal of Selected Topics in Signal Processing*, vol. 11, no. 8, pp. 1240-1253, Dec. 2017
 
+
+
+## Other Problems
+### flac install
+- automake version mismatch error
+https://askubuntu.com/questions/550824/intltool-automake-version-mismatch
+-
+prefix set the location where you have permission to change
+https://blog.csdn.net/rooki_men/article/details/82834864
