@@ -128,9 +128,8 @@ If there are some problems in python libraries, you can re-setup only python env
 ```sh
 $ cd tools
 $ make clean_python
-$ make all_python
+$ make python
 ```
-And then check the install is succeeded again.
 
 ## Execution of example scripts
 

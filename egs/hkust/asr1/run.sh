@@ -300,6 +300,7 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
     echo "stage 5: Decoding"
     nj=1
 
+    pids=() # initialize pids
     for rtask in ${recog_set}; do
     (
         decode_dir=decode_${rtask}_beam${beam_size}_e${recog_model}_p${penalty}_len${minlenratio}-${maxlenratio}_ctcw${ctc_weight}_rnnlm${lm_weight}_${lmtag}
@@ -311,27 +312,28 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
         #### use CPU for decoding
         ngpu=0
 
-        # ${decode_cmd} JOB=1:${nj} ${expdir}/${decode_dir}/log/decode.JOB.log \
-        #     asr_recog.py \
-        #     --ngpu ${ngpu} \
-        #     --backend ${backend} \
-        #     --batchsize 1 \
-        #     --recog-json ${feat_recog_dir}/split${nj}utt/data.JOB.json \
-        #     --result-label ${expdir}/${decode_dir}/data.JOB.json \
-        #     --model ${expdir}/results/${recog_model}  \
-        #     --beam-size ${beam_size} \
-        #     --penalty ${penalty} \
-        #     --maxlenratio ${maxlenratio} \
-        #     --minlenratio ${minlenratio} \
-        #     --ctc-weight ${ctc_weight} \
-        #     # --rnnlm ${lmexpdir}/rnnlm.model.best \
-        #     --lm-weight ${lm_weight} &
-        wait
+        ${decode_cmd} JOB=1:${nj} ${expdir}/${decode_dir}/log/decode.JOB.log \
+            asr_recog.py \
+            --ngpu ${ngpu} \
+            --backend ${backend} \
+            --batchsize 0 \
+            --recog-json ${feat_recog_dir}/split${nj}utt/data.JOB.json \
+            --result-label ${expdir}/${decode_dir}/data.JOB.json \
+            --model ${expdir}/results/${recog_model}  \
+            --beam-size ${beam_size} \
+            --penalty ${penalty} \
+            --maxlenratio ${maxlenratio} \
+            --minlenratio ${minlenratio} \
+            --ctc-weight ${ctc_weight} \
+            --rnnlm ${lmexpdir}/rnnlm.model.best \
+            --lm-weight ${lm_weight}
 
         score_sclite.sh --nlsyms ${nlsyms} ${expdir}/${decode_dir} ${dict}
 
     ) &
+    pids+=($!) # store background pids
     done
-    wait
+    i=0; for pid in "${pids[@]}"; do wait ${pid} || ((++i)); done
+    [ ${i} -gt 0 ] && echo "$0: ${i} background jobs are failed." && false
     echo "Finished"
 fi
