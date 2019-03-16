@@ -3,14 +3,14 @@
 
 from __future__ import print_function
 import sys
-from mmseg import seg_txt
+import jieba
+
 for line in sys.stdin:
   blks = str.split(line)
   out_line = blks[0]
   for i in range(1, len(blks)):
-    if blks[i] == "[VOCALIZED-NOISE]" or blks[i] == "[NOISE]" or blks[i] == "[LAUGHTER]":
+    if blks[i] in ["[VOCALIZED-NOISE]", "[NOISE]", "[LAUGHTER]"]:
       out_line += " " + blks[i]
       continue
-    for j in seg_txt(blks[i]):
-      out_line += " " + j
+    out_line += ' ' + " ".join(jieba.cut(blks[i]))
   print(out_line)

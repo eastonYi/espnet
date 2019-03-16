@@ -22,7 +22,7 @@ sdir=$1
 odir=$2
 mkdir -p ${odir}/tmp
 
-echo "remove utterances having more than $maxframes or less than $minframes frames"
+echo "remove utterances having more than $maxframes or less than $minframes frames. This will cost much time..."
 utils/data/get_utt2num_frames.sh ${sdir}
 < ${sdir}/utt2num_frames  awk -v maxframes="$maxframes" '{ if ($2 < maxframes) print }' \
     | awk -v minframes="$minframes" '{ if ($2 > minframes) print }' \

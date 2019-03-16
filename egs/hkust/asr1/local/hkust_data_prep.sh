@@ -35,7 +35,7 @@ n=`cat $train_dir/sph.flist $dev_dir/sph.flist | wc -l`
 
 #collect all trans, convert encodings to utf-8,
 find $hkust_text_dir -iname "*.txt" | grep -i "trans/train" | xargs cat |\
-  iconv -f GBK -t utf-8 - | perl -e '
+  iconv -f GBK -t UTF-8 | perl -e '
     while (<STDIN>) {
       @A = split(" ", $_);
       if (@A <= 1) { next; }
@@ -50,7 +50,7 @@ find $hkust_text_dir -iname "*.txt" | grep -i "trans/train" | xargs cat |\
   ' | sort -k1 > $train_dir/transcripts.txt || exit 1;
 
 find $hkust_text_dir -iname "*.txt" | grep -i "trans/dev" | xargs cat |\
-  iconv -f GBK -t utf-8 - | perl -e '
+  iconv -f GBK -t UTF-8 | perl -e '
     while (<STDIN>) {
       @A = split(" ", $_);
       if (@A <= 1) { next; }
@@ -104,7 +104,7 @@ awk '{ segment=$1; split(segment,S,"-"); side=S[2]; audioname=S[1];startf=S[3];e
    print segment " " audioname "-" side " " startf/100 " " endf/100}' <$dev_dir/text > $dev_dir/segments
 awk '{name = $0; gsub(".sph$","",name); gsub(".*/","",name); print(name " " $0)}' $dev_dir/sph.flist > $dev_dir/sph.scp
 
-sph2pipe=`which sph2pipe` || sph2pipe=$KALDI_ROOT/tools/sph2pipe_v2.5/sph2pipe
+sph2pipe=$KALDI_ROOT/tools/sph2pipe_v2.5/sph2pipe
 [ ! -x $sph2pipe ] && echo "Could not find the sph2pipe program at $sph2pipe" && exit 1;
 
 cat $train_dir/sph.scp | awk -v sph2pipe=$sph2pipe '{printf("%s-A %s -f wav -p -c 1 %s |\n", $1, sph2pipe, $2);

@@ -64,7 +64,7 @@ lmtag=            # tag for managing LMs
 
 # decoding parameter
 lm_weight=0.3
-beam_size=20
+beam_size=1
 penalty=0.0
 maxlenratio=0.0
 minlenratio=0.0
@@ -75,8 +75,8 @@ recog_model=model.acc.best # set a model to be used for decoding: 'model.acc.bes
 samp_prob=0.0
 
 # data
-hkust1=/export/corpora/LDC/LDC2005S15/
-hkust2=/export/corpora/LDC/LDC2005T32/
+hkust1=/mnt/lustre/xushuang/easton/data/hkust/HKUST_LDC2005S15/
+hkust2=/mnt/lustre/xushuang/easton/data/hkust/HKUST_LDC2005T32/
 
 # exp tag
 tag="" # tag for managing experiments.
@@ -123,10 +123,10 @@ if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
     echo "stage 1: Feature Generation"
     fbankdir=fbank
     # Generate the fbank features; by default 80-dimensional fbanks with pitch on each frame
-    steps/make_fbank_pitch.sh --cmd "$train_cmd" --nj 32 --write_utt2num_frames true \
-        data/train exp/make_fbank/train ${fbankdir}
     steps/make_fbank_pitch.sh --cmd "$train_cmd" --nj 10 --write_utt2num_frames true \
         data/dev exp/make_fbank/dev ${fbankdir}
+    steps/make_fbank_pitch.sh --cmd "$train_cmd" --nj 32 --write_utt2num_frames true \
+        data/train exp/make_fbank/train ${fbankdir}
 
     # make a dev set
     utils/subset_data_dir.sh --first data/train 4000 data/${train_dev}
@@ -135,6 +135,9 @@ if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
     utils/subset_data_dir.sh --last data/train ${n} data/train_nodev
 
     # make a training set
+    # Remove excess utterances once they appear  more than a specified
+    # number of times with the same transcription, in a data set.
+    # E.g. useful for removing excess "uh-huh" from training.
     utils/data/remove_dup_utts.sh 300 data/train_nodev data/train_nodup
 
     # speed-perturbed
@@ -161,10 +164,10 @@ if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
         /export/a{11,12,13,14}/${USER}/espnet-data/egs/${split_dir}/dump/${train_dev}/delta${do_delta}/storage \
         ${feat_dt_dir}/storage
     fi
-    dump.sh --cmd "$train_cmd" --nj 32 --do_delta ${do_delta} \
-        data/${train_set}/feats.scp data/${train_set}/cmvn.ark exp/dump_feats/train ${feat_tr_dir}
     dump.sh --cmd "$train_cmd" --nj 10 --do_delta ${do_delta} \
         data/${train_dev}/feats.scp data/${train_set}/cmvn.ark exp/dump_feats/dev ${feat_dt_dir}
+    dump.sh --cmd "$train_cmd" --nj 32 --do_delta ${do_delta} \
+        data/${train_set}/feats.scp data/${train_set}/cmvn.ark exp/dump_feats/train ${feat_tr_dir}
     for rtask in ${recog_set}; do
         feat_recog_dir=${dumpdir}/${rtask}/delta${do_delta}; mkdir -p ${feat_recog_dir}
         dump.sh --cmd "$train_cmd" --nj 10 --do_delta ${do_delta} \
@@ -295,7 +298,7 @@ fi
 
 if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
     echo "stage 5: Decoding"
-    nj=32
+    nj=1
 
     for rtask in ${recog_set}; do
     (
@@ -308,21 +311,21 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
         #### use CPU for decoding
         ngpu=0
 
-        ${decode_cmd} JOB=1:${nj} ${expdir}/${decode_dir}/log/decode.JOB.log \
-            asr_recog.py \
-            --ngpu ${ngpu} \
-            --backend ${backend} \
-            --batchsize 0 \
-            --recog-json ${feat_recog_dir}/split${nj}utt/data.JOB.json \
-            --result-label ${expdir}/${decode_dir}/data.JOB.json \
-            --model ${expdir}/results/${recog_model}  \
-            --beam-size ${beam_size} \
-            --penalty ${penalty} \
-            --maxlenratio ${maxlenratio} \
-            --minlenratio ${minlenratio} \
-            --ctc-weight ${ctc_weight} \
-            --rnnlm ${lmexpdir}/rnnlm.model.best \
-            --lm-weight ${lm_weight} &
+        # ${decode_cmd} JOB=1:${nj} ${expdir}/${decode_dir}/log/decode.JOB.log \
+        #     asr_recog.py \
+        #     --ngpu ${ngpu} \
+        #     --backend ${backend} \
+        #     --batchsize 1 \
+        #     --recog-json ${feat_recog_dir}/split${nj}utt/data.JOB.json \
+        #     --result-label ${expdir}/${decode_dir}/data.JOB.json \
+        #     --model ${expdir}/results/${recog_model}  \
+        #     --beam-size ${beam_size} \
+        #     --penalty ${penalty} \
+        #     --maxlenratio ${maxlenratio} \
+        #     --minlenratio ${minlenratio} \
+        #     --ctc-weight ${ctc_weight} \
+        #     # --rnnlm ${lmexpdir}/rnnlm.model.best \
+        #     --lm-weight ${lm_weight} &
         wait
 
         score_sclite.sh --nlsyms ${nlsyms} ${expdir}/${decode_dir} ${dict}
@@ -332,4 +335,3 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
     wait
     echo "Finished"
 fi
-

@@ -209,7 +209,6 @@ def train(args):
     # check cuda availability
     if not torch.cuda.is_available():
         logging.warning('cuda is not available')
-
     # get input and output dimension info
     with open(args.valid_json, 'rb') as f:
         valid_json = json.load(f)['utts']
@@ -253,8 +252,8 @@ def train(args):
         logging.info('ARGS: ' + key + ': ' + str(vars(args)[key]))
 
     reporter = model.reporter
-
     # check the use of multi-gpu
+
     if args.ngpu > 1:
         model = torch.nn.DataParallel(model, device_ids=list(range(args.ngpu)))
         logging.info('batch size is automatically increased (%d -> %d)' % (
